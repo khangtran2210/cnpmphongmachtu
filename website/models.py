@@ -29,7 +29,7 @@ class DanhSachKham(db.Model):
     gioitinh = db.Column(db.Integer, nullable=False)
     namsinh = db.Column(db.String(300), nullable=False)
     diachi = db.Column(db.String(300), nullable=False)
-    cmnd = db.Column(db.String(300), unique=True, nullable=False)
+    cmnd = db.Column(db.String(300), nullable=False)
     sdt = db.Column(db.String(300), nullable=False)
     trangthai = db.Column(db.Boolean, nullable=False)
 
