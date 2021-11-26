@@ -20,45 +20,47 @@
                 <th scope="col" class="sort" data-sort="diachi">Địa Chỉ</th>
                 <th scope="col" class="sort" data-sort="cmnd">CMND</th>
                 <th scope="col" class="sort" data-sort="sdt">SĐT</th>
-                <th scope="col" class="sort" data-sort="completion">Đơn giá</th>
+                <th scope="col" class="sort" data-sort="completion">Trạng Thái</th>
                 <th scope="col">Hành Động</th>
               </tr>
             </thead>
             <tbody class="list">
+              {% for p in danhsach %}
               <tr>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-                <td class="budget">$2500 USD</td>
-
+                <td class="budget">{{p.mads}}</td>
+                <td class="budget">{{p.ngaykham}}</td>
+                <td class="budget">{{p.hoten}}</td>
+                {% if p.gioitinh == 1 %}
+                <td class="budget">Nam</td>
+                {% else %}
+                <td class="budget">Nữ</td>
+                {% endif %}
+                <td class="budget">{{p.namsinh}}</td>
+                <td class="budget">{{p.diachi}}</td>
+                <td class="budget">{{p.cmnd}}</td>
+                <td class="budget">{{p.sdt}}</td>
+                {% if p.trangthai == 0 %}
+                <td class="budget">Chưa khám</td>
+                {% else %}
+                <td class="budget">Đã Khám</td>
+                {% endif %}
                 <td class="text-right">
                   <div class="dropdown">
-                    <a
-                      class="btn btn-sm btn-icon-only text-light"
-                      href="#"
-                      role="button"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                    >
+                    <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown"
+                      aria-haspopup="true" aria-expanded="false">
                       <i class="fas fa-ellipsis-v"></i>
                     </a>
-                    <div
-                      class="
+                    <div class="
                         dropdown-menu dropdown-menu-right dropdown-menu-arrow
-                      "
-                    >
-                      <a class="dropdown-item" href="#">Xoá</a>
+                      ">
+                      <a class="dropdown-item" href="xoa-danhsachkham/{{p.mads}}"
+                        onclick="return confirm('Xoá người khám này ?')">Xoá</a>
                       <a class="dropdown-item" href="#">Khám</a>
                     </div>
                   </div>
                 </td>
               </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -76,9 +78,7 @@
                 <a class="page-link" href="#">1</a>
               </li>
               <li class="page-item">
-                <a class="page-link" href="#"
-                  >2 <span class="sr-only">(current)</span></a
-                >
+                <a class="page-link" href="#">2 <span class="sr-only">(current)</span></a>
               </li>
               <li class="page-item"><a class="page-link" href="#">3</a></li>
               <li class="page-item">

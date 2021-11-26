@@ -99,5 +99,5 @@ chitiettoathuoc = db.Table(
     db.Column("soluong", db.Integer, default=0),
 )
 
-# if __name__ == "__main__":
-#     db.create_all()
+if __name__ == "__main__":
+    db.create_all()
