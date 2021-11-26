@@ -12,8 +12,9 @@ PHẦN CLONE
 
 PHẦN PUSH lên lại
 
-Đẩy mới hết các code vừa xong vào [git add .]
-Kiểm tra bằng lệnh [git status]
-Nếu đã add vào hết rồi thì commit lại [git commit -m "Lời nhắn"]
-Kiểm tra commit bằng lệnh [git log]
-Đẩy code lên bằng lệnh push [git push]
+1. Đẩy mới hết các code vừa xong vào [git add .]
+2. Kiểm tra bằng lệnh [git status]
+3. Nếu đã add vào hết rồi thì commit lại [git commit -m "Lời nhắn"]
+4. Kiểm tra commit bằng lệnh [git log]
+5. Nếu chưa có remote thì phải tạo bằng lệnh [git remote add origin <link lúc clone>]
+6. Push code [git push origin]
