@@ -17,16 +17,16 @@
                                 <th scope="col" class="sort" data-sort="mads">Ngày Bán</th>
                                 <th scope="col" class="sort" data-sort="ngaykham">Số Bệnh Nhân</th>
                                 <th scope="col" class="sort" data-sort="hoten">Doanh Thu</th>
-                                <th scope="col" class="sort" data-sort="gioitinh">Tỷ lệ</th>
                             </tr>
                         </thead>
                         <tbody class="list">
+                            {% for p in danhsach %}
                             <tr>
-                                <td class="budget">$2500 USD</td>
-                                <td class="budget">$2500 USD</td>
-                                <td class="budget">$2500 USD</td>
-                                <td class="budget">$2500 USD</td>
+                                <td class="budget">${{p.ngayban}}</td>
+                                <td class="budget">${{p.tong_bn}}</td>
+                                <td class="budget">${{p.doanh_thu}}</td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
