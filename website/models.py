@@ -13,18 +13,32 @@ from flask_login import UserMixin
 # ----------------------- Tạo class ----------------
 
 
+class QuyDinh(db.Model):
+    __tablename__ = "QuyDinh"
+    maquydinh = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    tenquydinh = db.Column(db.String(300), nullable=False)
+    quydinh = db.Column(db.Float, nullable=False)
+
+
+class Quyen(db.Model):
+    __tablename__ = "Quyen"
+    maquyen = db.Column(db.Integer, primary_key=True)
+    tenquyen = db.Column(db.String(300), nullable=False)
+    taikhoans = db.relationship("TaiKhoan", backref="o_quyen", lazy=False)
+
+
 class TaiKhoan(db.Model, UserMixin):
     __tablename__ = "TaiKhoan"
     madangnhap = db.Column(db.Integer, autoincrement=True, primary_key=True)
     tendangnhap = db.Column(db.String(150), unique=True)
     matkhau = db.Column(db.String(150), nullable=False)
-    maquyen = db.Column(db.Integer, default=3)
+    ma_quyen = db.Column(db.Integer, db.ForeignKey(Quyen.maquyen), unique=True)
 
 
 class DanhSachKham(db.Model):
     __tablename__ = "DanhSachKham"
     mads = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    ngaykham = db.Column(db.DateTime, default=datetime.now())
+    ngaykham = db.Column(db.Date, default=datetime.now().date())
     hoten = db.Column(db.String(300), nullable=False)
     gioitinh = db.Column(db.Integer, nullable=False)
     namsinh = db.Column(db.String(300), nullable=False)
@@ -49,7 +63,7 @@ class BenhNhan(db.Model):
 class PhieuKham(db.Model):
     __tablename__ = "PhieuKham"
     mapk = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    ngaykham = db.Column(db.DateTime, default=datetime.now())
+    ngaykham = db.Column(db.Date, default=datetime.now().date())
     trieuchung = db.Column(db.String(300), nullable=False)
     loaibenh = db.Column(db.String(300), nullable=False)
     tienkham = db.Column(db.Float, default=0)
@@ -61,43 +75,65 @@ class PhieuKham(db.Model):
 class ToaThuoc(db.Model):
     __tablename__ = "ToaThuoc"
     matoa = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    ngayke = db.Column(db.DateTime, default=datetime.now())
+    ngayke = db.Column(db.Date, default=datetime.now().date())
     tienthuoc = db.Column(db.Float, default=0)
     ma_pk = db.Column(db.Integer, db.ForeignKey(PhieuKham.mapk), unique=True)
     hoadons = relationship("HoaDon", backref="o_toathuoc", lazy=False)
-    thuocs = relationship(
-        "Thuoc",
-        secondary="chitiettoathuoc",
-        backref=db.backref("o_toathuoc", lazy=False),
-    )
+    chitiettoas = relationship("ChiTietToa", backref="o_toathuoc", lazy=False)
 
 
 class HoaDon(db.Model):
     __tablename__ = "HoaDon"
     mahd = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    ngayban = db.Column(db.DateTime, default=datetime.now())
+    ngayban = db.Column(db.Date, default=datetime.now().date())
     tongthu = db.Column(db.Float, default=0)
     dathanhtoan = db.Column(db.Boolean, default=False)
     ma_pk = db.Column(db.Integer, db.ForeignKey(PhieuKham.mapk), unique=True)
     ma_toa = db.Column(db.Integer, db.ForeignKey(ToaThuoc.matoa), unique=True)
 
 
+class CachDung(db.Model):
+    __tablename__ = "CachDung"
+    macachdung = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    tencachdung = db.Column(db.String(300), nullable=False)
+    thuocs = relationship("Thuoc", backref="o_cachdung", lazy=True)
+
+
+class DonVi(db.Model):
+    __tablename__ = "DonVi"
+    madonvi = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    tendonvi = db.Column(db.String(300), nullable=False)
+    thuocs = relationship("Thuoc", backref="o_donvi", lazy=True)
+
+
 class Thuoc(db.Model):
     __tablename__ = "Thuoc"
     mathuoc = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    tenthuoc = db.Column(db.String(300), nullable=False)
-    donvi = db.Column(db.String(300), nullable=False)
+    tenthuoc = db.Column(db.String(300), unique=True, nullable=False)
     soluong = db.Column(db.Integer, default=0)
     dongia = db.Column(db.Float, default=0)
-    cachdung = db.Column(db.String(300), nullable=False)
+    madonvi = db.Column(db.Integer, db.ForeignKey(DonVi.madonvi), unique=True)
+    macachdung = db.Column(db.Integer,
+                           db.ForeignKey(CachDung.macachdung),
+                           unique=True)
+    trangthai = db.Column(db.Integer, default=1)
 
 
-chitiettoathuoc = db.Table(
-    "chitiettoathuoc",
-    db.Column("matoa", db.Integer, db.ForeignKey(ToaThuoc.matoa)),
-    db.Column("mathuoc", db.Integer, db.ForeignKey(Thuoc.mathuoc)),
-    db.Column("soluong", db.Integer, default=0),
-)
+class ChiTietToa(db.Model):
+    __tablename__ = "ChiTietToa"
+    matoa = db.Column(db.Integer,
+                      db.ForeignKey(ToaThuoc.matoa),
+                      primary_key=True)
+    mathuoc = db.Column(db.Integer,
+                        db.ForeignKey(Thuoc.mathuoc),
+                        primary_key=True)
+    soluong = db.Column(db.Integer, default=0)
+    tienthuoc = db.Column(db.Float, default=0)
+    thuocs = db.relationship("Thuoc", backref="o_chitiettoa", lazy=False)
+
 
 if __name__ == "__main__":
+    # Xoá database
+    #db.drop_all()
+    # Tạo database
     db.create_all()

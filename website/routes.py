@@ -6,18 +6,21 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from website import app, db, utils
-from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, chitiettoathuoc, HoaDon
-
+from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, ChiTietToa, HoaDon
+import calendar
+import datetime
 # Tạo tên các prefix
 yta = Blueprint('yta', __name__)
 user = Blueprint('user', __name__)
 bacsi = Blueprint('bacsi', __name__)
 admin = Blueprint('admin', __name__)
 
-
 # Xử lí các trang
 #--------------------NGƯỜI DÙNG---------------------
+
+
 # Chặn người dùng đăng nhập trái phép
+# Dùng @login_required chèn giữa @exam.route('/...') và hàm để chặn
 def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
@@ -29,12 +32,37 @@ def login_required(f):
     return wrap
 
 
+# Trang khách đặt lịch khám
 @user.route('/')
-@login_required
 def user_home():
-    return render_template('home.html')
+    if request.method == 'POST':
+        ngaykham = utils.today
+        hoten = request.form.get("hoten")
+        gioitinh = request.form.get("gioitinh")
+        namsinh = request.form.get("namsinh")
+        cmnd = request.form.get("cmnd")
+        diachi = request.form.get("diachi")
+        sdt = request.form.get("sdt")
+        trangthai = 0
+        nguoikham = DanhSachKham(ngaykham=ngaykham,
+                                 hoten=hoten,
+                                 gioitinh=gioitinh,
+                                 namsinh=namsinh,
+                                 cmnd=cmnd,
+                                 diachi=diachi,
+                                 sdt=sdt,
+                                 trangthai=trangthai)
+
+        try:
+            db.session.add(nguoikham)
+            db.session.commit()
+            flash("Bạn đã đặt lịch khám thành công", "success")
+        except:
+            flash("Bạn đã đặt lịch khám thất bại", "error")
+    return render_template('user_home.html')
 
 
+# Trang đăng nhập
 @user.route('/login', methods=['GET', 'POST'])
 def user_login():
     if request.method == 'POST':
@@ -49,24 +77,25 @@ def user_login():
             session["maquyen"] = dangnhap.maquyen
             session["logged_in"] = True
             #Phân quyền với 0 - Admin, 1 - Bác sĩ, 2 - Y tá, 3 - Người dùng
-            if (dangnhap.maquyen == 0):
+            if (session["maquyen"] == 0):
                 return redirect(url_for("admin.home"))
-            if (dangnhap.maquyen == 1):
+            if (session["maquyen"] == 1):
                 return redirect(url_for("bacsi.home"))
-            if (dangnhap.maquyen == 2):
+            if (session["maquyen"] == 2):
                 return redirect(url_for("yta.yta_home"))
-            if (dangnhap.maquyen == 3):
+            if (session["maquyen"] == 3):
                 return redirect(url_for("user.user_home"))
     return render_template('login.html')
 
 
+# Xử lí logout
 @user.route('/logout')
-@login_required
 def user_logout():
     session.clear()
     return redirect(url_for('user.user_login'))
 
 
+# Trang đăng kí tài khoản
 @user.route('/register', methods=['GET', 'POST'])
 def user_register():
     if request.method == 'POST':
@@ -96,85 +125,101 @@ def user_register():
 #--------------------Y TÁ---------------------
 
 
-#Homepage
+# Trang chủ của y tá
+@yta.route('/')
 @yta.route('/home')
-@login_required
 def yta_home():
-    return render_template('yta.html')
+    return render_template('yta_home.html')
 
 
-#Lập hoá đơn
+# Trang hoá đơn
+@yta.route('/hoadon', methods=['GET', 'POST'])
+def yta_hoadon():
+    # Phân trang cho những Phiếu khám chưa lập thành hoá đơn
+    current_pageTop = request.args.get('pageTop', 1, type=int)
+    # Phân trang cho những Hoá Đơn chưa thanh toán
+    current_pageBot = request.args.get('pageBot', 1, type=int)
+    # Gọi danh sách phiếu khám chưa lập hoá đơn
+    dsphieukham_no_hd = utils.get_pk_no_hd(current_pageTop, 4)
+    # Gọi danh sách Hoá Đơn chưa thanh toán
+    dshoadon_nopay = utils.get_hoadon(current_pageBot, 4)
+    return render_template('yta_hoadon.html',
+                           dsphieukham=dsphieukham_no_hd,
+                           dshoadon=dshoadon_nopay)
+
+
+# Lập hoá đơn
 @yta.route('/laphoadon', methods=['GET', 'POST'])
-@login_required
 def yta_laphoadon():
-    maphieukham = request.form.get('maphieukham')
-    matoa = request.form.get('matoathuoc')
+    mapk = request.args.get("mapk")
+    phieukham = utils.get_pk_by_mapk(mapk)
+    toathuocs = utils.get_toathuoc_by_mapk(mapk)
     ngayban = utils.today
-    dathanhtoan = 0
-
     try:
-        phieukham_obj = utils.get_pk_by_mapk(maphieukham)
-        toathuoc_obj = utils.get_toathuoc_by_matoa(matoa)
-        # Tạo ra một hoá đơn có mã phiếu khám và mã toa
-        # Xử lí tính tổng thu qua phiếu khám và mã toa
-        if (phieukham_obj != None and toathuoc_obj != None):
-            new_hoadon = HoaDon(maphieukham=maphieukham,
-                                ngayban=ngayban,
-                                o_phieukham=phieukham_obj,
-                                o_toathuoc=toathuoc_obj,
-                                tongthu=phieukham_obj.tienkham +
-                                toathuoc_obj.tienthuoc,
-                                dathanhtoan=False)
-            db.session.add(new_hoadon)
-            db.session.commit()
-            print("Thêm thành công")
-        else:
-            print("Không lấy được đối tượng")
-        return redirect(url_for("yta.yta_laphoadon"))
-
+        hoadon = HoaDon(ngayban=ngayban, dathanhtoan=False)
+        phieukham.hoadons.append(hoadon)
+        toathuocs.hoadons.append(hoadon)
+        hoadon.tongthu = phieukham.tienkham + toathuocs.tienthuoc
+        db.session.commit()
+        print("Lập hoá đơn thành công")
+        return redirect(url_for("yta.yta_hoadon"))
     except:
-        print("Thêm thất bại")
-    return render_template('laphoadon.html')
+        print("Lập hoá đon thất bại")
+        return redirect(url_for("yta.yta_hoadon"))
+
+
+# Thanh toán hoá đơn
+@yta.route('/thanhtoanhoadon', methods=['GET', 'POST'])
+def yta_thanhtoanhoadon():
+    mahd = request.args.get("mahd")
+    hoadon = utils.get_hoadon_by_mahd(mahd)
+    try:
+        hoadon.dathanhtoan = True
+        db.session.commit()
+        print("Đã thanh toán thành công")
+        return redirect(url_for("yta.yta_hoadon"))
+    except:
+        print("Thanh toán thất bại")
+        return redirect(url_for("yta.yta_hoadon"))
 
 
 #CRUD Danh sách khám
 #Thêm bệnh nhân khám
 @yta.route('/themdskham', methods=['POST', 'GET'])
-@login_required
 def yta_themdskham():
-    ngaykham = utils.today
-    hoten = request.form.get("hoten")
-    gioitinh = request.form.get("gioitinh")
-    namsinh = request.form.get("namsinh")
-    cmnd = request.form.get("cmnd")
-    diachi = request.form.get("diachi")
-    sdt = request.form.get("sdt")
-    trangthai = 0
-    nguoikham = DanhSachKham(ngaykham=ngaykham,
-                             hoten=hoten,
-                             gioitinh=gioitinh,
-                             namsinh=namsinh,
-                             cmnd=cmnd,
-                             diachi=diachi,
-                             sdt=sdt,
-                             trangthai=trangthai)
+    if request.method == 'POST':
+        ngaykham = utils.today
+        hoten = request.form.get("hoten")
+        gioitinh = request.form.get("gioitinh")
+        namsinh = request.form.get("namsinh")
+        cmnd = request.form.get("cmnd")
+        diachi = request.form.get("diachi")
+        sdt = request.form.get("sdt")
+        trangthai = 0
+        nguoikham = DanhSachKham(ngaykham=ngaykham,
+                                 hoten=hoten,
+                                 gioitinh=gioitinh,
+                                 namsinh=namsinh,
+                                 cmnd=cmnd,
+                                 diachi=diachi,
+                                 sdt=sdt,
+                                 trangthai=trangthai)
 
-    try:
-        db.session.add(nguoikham)
-        db.session.commit()
-        print("Thêm thành công")
-        return redirect("danhsachkham")
-    except:
-        print("Thêm thất bại")
-    return render_template('themdskham.html')
+        try:
+            db.session.add(nguoikham)
+            db.session.commit()
+            print("Thêm thành công")
+            return redirect(url_for("yta.yta_themdskham"))
+        except:
+            print("Thêm thất bại")
+    return render_template('yta_themdskham.html')
 
 
 # Xoá bệnh nhân trong danh sách khám
-@yta.route('/xoa-danhsachkham/<int:id>', methods=['GET', 'POST'])
-@login_required
-def yta_xoadanhsachkham(id):
-    id = str(id)
-    nguoikham = DanhSachKham.query.filter(DanhSachKham.mads == id).first()
+@yta.route('/xoa-danhsachkham', methods=['GET', 'POST'])
+def yta_xoadanhsachkham():
+    mads = request.args.get('mads')
+    nguoikham = DanhSachKham.query.filter(DanhSachKham.mads == mads).first()
     print("Mã danh sách lấy được : " + "'" + str(id) + "'")
     print(nguoikham)
     try:
@@ -190,25 +235,281 @@ def yta_xoadanhsachkham(id):
 
 # Danh sách bệnh nhân khám ngày hôm nay
 @yta.route('/danhsachkham')
-@login_required
 def yta_danhsachkham():
-    danhsachkham = utils.get_ds_all()
-    return render_template('danhsachkham.html', danhsach=danhsachkham)
+    current_page = request.args.get('page', 1, type=int)
+    danhsachkham = utils.get_ds_today(current_page, 1)
+    return render_template('yta_danhsachkham.html', danhsach=danhsachkham)
 
 
-# Báo cáo
-@yta.route('/baocao')
-@login_required
+# Trang báo cáo doanh thu theo ngày
+@yta.route('/baocao', methods=['GET', 'POST'])
 def yta_baocao():
-    danhsachbc = utils.get_baocao()
-    return render_template('baocao.html', danhsach=danhsachbc)
+    current_page = request.args.get('page', 1, type=int)
+    today = utils.today
+    fdate_of_month = today.replace(day=1)
+    ldate_of_month = today.replace(
+        day=calendar.monthrange(today.year, today.month)[1])
+
+    danhsachbc = utils.get_baocao(current_page,
+                                  5,
+                                  firstDate=fdate_of_month,
+                                  lastDate=ldate_of_month)
+    if request.method == 'POST':
+        # Lấy ngày từ trên form về
+        ngaydau = request.form.get('ngaydau')
+        ngaycuoi = request.form.get('ngaycuoi')
+        try:
+            danhsachbc = utils.get_baocao(current_page,
+                                          5,
+                                          firstDate=ngaydau,
+                                          lastDate=ngaycuoi)
+            return render_template('yta_baocao.html',
+                                   danhsach=danhsachbc,
+                                   fdate=fdate_of_month,
+                                   ldate=ldate_of_month)
+        except:
+            print("Không lấy được ngày")
+    return render_template('yta_baocao.html',
+                           danhsach=danhsachbc,
+                           fdate=fdate_of_month,
+                           ldate=ldate_of_month)
 
 
 #Thêm người
 #--------------------BÁC SĨ--------------------
+#home
+@bacsi.route('/')
+@bacsi.route('/home')
+def home():
+    return render_template('bacsi_home.html')
+
+
+#Xem tất cả bệnh nhân trong danh sách khám
+@bacsi.route('/danhsachkham')
+def bacsi_danhsachkham():
+    current_page = request.args.get('page', 1, type=int)
+    danhsachkham = utils.get_ds_today(current_page, 6)
+    return render_template('bacsi_danhsachkham.html', danhsach=danhsachkham)
+
+
+#Danh sách bệnh nhân
+@bacsi.route('/danhsachbenhnhan')
+def bacsi_danhsachbenhnhan():
+    current_page = request.args.get('page', 1, type=int)
+    danhsach = utils.get_benhnhan_all(current_page, 6)
+    return render_template('bacsi_danhsachbenhnhan.html', danhsach=danhsach)
+
+
+#Thêm bệnh nhân nếu bệnh nhân chưa có trong Danh sách
+@bacsi.route('/thembenhnhan', methods=['GET', 'POST'])
+def bacsi_thembenhnhan():
+    cmnd = request.args.get('cmnd', 123, type=str)
+    benhnhan = utils.get_benhnhan_by_cmnd(cmnd)
+    benhNhan_dskham = utils.get_ds_by_cmnd(cmnd)
+    # Nếu chưa có bệnh nhân nào thì thêm bệnh nhân trong ds khám vào thành bệnh nhân mới
+    if benhnhan == None:
+        hoten = benhNhan_dskham.hoten
+        namsinh = benhNhan_dskham.namsinh
+        gioitinh = benhNhan_dskham.gioitinh
+        diachi = benhNhan_dskham.diachi
+        cmnd = benhNhan_dskham.cmnd
+        sdt = benhNhan_dskham.sdt
+        benhNhanMoi = BenhNhan(hoten=hoten,
+                               gioitinh=gioitinh,
+                               namsinh=namsinh,
+                               diachi=diachi,
+                               cmnd=cmnd,
+                               sdt=sdt)
+        try:
+            db.session.add(benhNhanMoi)
+            db.session.commit()
+            print("Thêm thành công")
+            # Thêm xong đẩy qua trang lập phiếu khám
+            return redirect(url_for('bacsi.bacsi_lapphieukham', cmnd=cmnd))
+        except:
+            print("Thêm thất bại")
+    # Nếu có rồi thì chỉ đẩy cmnd qua thẳng lập phiếu khám luôn
+    else:
+        return redirect(url_for('bacsi.bacsi_lapphieukham', cmnd=cmnd))
+
+
+# Xoá bệnh nhân trong danh sách khám
+@bacsi.route('/xoa-danhsachkham', methods=['GET', 'POST'])
+def bacsi_xoadanhsachkham():
+    mads = request.args.get('mads')
+    danhsachkham = DanhSachKham.query.filter(DanhSachKham.mads == mads).first()
+    try:
+        db.session.delete(danhsachkham)
+        db.session.commit()
+        print("Xoá thành công")
+        return redirect(url_for("bacsi.bacsi_danhsachkham"))
+    except:
+        print("Xoá thất bại")
+    return redirect(url_for("bacsi.bacsi_danhsachkham"))
+
+
+#Xóa bệnh nhân trong bảng bệnh nhân
+@bacsi.route('/xoa-benhnhan', methods=['GET', 'POST'])
+def bacsi_xoabenhnhan():
+    mabn = request.args.get('mabn')
+    benhnhan = BenhNhan.query.filter(BenhNhan.mabn == mabn).first()
+    print(benhnhan)
+    try:
+        db.session.delete(benhnhan)
+        db.session.commit()
+        print("Xoá thành công")
+        return redirect(url_for("bacsi.bacsi_danhsachbenhnhan"))
+    except:
+        print("Xoá thất bại")
+
+    return redirect(url_for("bacsi.bacsi_danhsachbenhnhan"))
+
+
+# Thêm thuốc cho bệnh nhân trong phiếu khám
+@bacsi.route("/themtoathuoc", methods=['GET', 'POST'])
+def bacsi_them_thuocpk():
+    # Lấy mã toa từ trang lập phiếu khám qua
+    matoa = request.args.get('matoa', 123, type=str)
+    ngayke = utils.today
+    chiTietToa = utils.get_chitiettoa_by_matoa(matoa)
+    thuocs = utils.get_thuoc_all()
+    if request.method == 'POST':
+        matoa = request.form.get('matoa')
+        mathuoc = request.form.get('mathuoc')
+        soluong = request.form.get('soluong')
+        toathuoc = utils.get_toathuoc_by_matoa(matoa)
+        thuoc_obj = utils.get_thuoc_by_mathuoc(mathuoc)
+        # Lấy chi tiết toa thuốc của toa thuốc hiện tại
+        ct = toathuoc.chitiettoas
+        if request.form['themthuoc'] == "Thêm thuốc":
+            # Kiểm tra trong chi tiết toa này có thuốc đó hay Chưa
+            exist = utils.get_chitiet_by_matoa_mathuoc(matoa, mathuoc)
+            try:
+                if exist is None:
+                    toathuoc.chitiettoas.append(
+                        ChiTietToa(soluong=soluong,
+                                   tienthuoc=thuoc_obj.dongia,
+                                   thuocs=thuoc_obj))
+                    # Cập nhật giá cho toa thuốc (vì mới thêm thuốc vào)
+                    db.session.commit()
+                    print("Thêm chi tiết thuốc thành công")
+                    # Cập nhật lại giá tiền cho toa thuốc
+                    toathuoc.tienthuoc = 0
+                    for cts in ct:
+                        toathuoc.tienthuoc += cts.soluong * cts.tienthuoc  # Cộng lại
+                    db.session.commit()
+                    print("Cập nhật tiền trong toa thuốc thành công")
+                    return redirect(
+                        url_for('bacsi.bacsi_them_thuocpk', matoa=matoa))
+                # Nếu có rồi thì lấy cập nhật số lượng lên
+                else:
+                    exist.soluong = exist.soluong + int(soluong)
+                    # Cập nhật lại số lượng
+                    db.session.commit()
+                    print("Cập nhật số lượng thành công")
+                    # Cập nhật lại tiền có trong toa thuốc
+                    # Reset tiền
+                    toathuoc.tienthuoc = 0
+                    for cts in ct:
+                        toathuoc.tienthuoc += cts.soluong * cts.tienthuoc  # Cộng lại
+                    db.session.commit()
+                    print("Cập nhật tiền trong toa thuốc thành công")
+                    return redirect(
+                        url_for('bacsi.bacsi_them_thuocpk', matoa=matoa))
+            except:
+                print("Thêm chi tiết thuốc thất bại")
+
+    return render_template('bacsi_themthuoc.html',
+                           dsthuoc=thuocs,
+                           dschitiet=chiTietToa,
+                           danhsach=0,
+                           matoa=matoa,
+                           ngayke=ngayke)
+
+
+# Xoá chi tiết thuốc có trong giỏ
+@bacsi.route("/xoa-chitietthuoc")
+def bacsi_xoachitietthuoc():
+    matoa = request.args.get('matoa')
+    mathuoc = request.args.get('mathuoc')
+    delete_obj = utils.get_chitiet_by_matoa_mathuoc(matoa, mathuoc)
+    if (delete_obj != None):
+        db.session.delete(delete_obj)
+        db.session.commit()
+        # Cập nhật lại tiền trong toa thuốc
+        toathuoc = utils.get_toathuoc_by_matoa(matoa)
+        ct = toathuoc.chitiettoas
+        toathuoc.tienthuoc = 0
+        for cts in ct:
+            toathuoc.tienthuoc += cts.tienthuoc * cts.soluong
+        db.session.commit()
+        return redirect(url_for('bacsi.bacsi_them_thuocpk', matoa=matoa))
+
+
+# Lập phiếu khám cho bệnh nhân
+@bacsi.route('/lapphieukham', methods=['GET', 'POST'])
+def bacsi_lapphieukham():
+    cmnd = request.args.get('cmnd', 123, type=str)
+    benhnhan = utils.get_benhnhan_by_cmnd(cmnd)
+    mabn = -1
+    tenbenhnhan = "Không có"
+    if benhnhan is not None:
+        tenbenhnhan = benhnhan.hoten
+        mabn = benhnhan.mabn
+    ngaykham = utils.today
+    if request.method == 'POST':
+        mabn = request.form.get('mabn')
+        benhnhan = utils.get_benhnhan_by_mabn(mabn)
+        trieuchung = request.form.get('trieuchung')
+        loaibenh = request.form.get('loaibenh')
+        tienkham = float(request.form.get('tienkham'))
+        phieukham = PhieuKham(trieuchung=trieuchung,
+                              ngaykham=ngaykham,
+                              loaibenh=loaibenh,
+                              tienkham=tienkham)
+        if request.form['ketoa'] == "Kê toa":
+            try:
+                benhnhan.phieukhams.append(phieukham)
+                db.session.add(phieukham)
+                db.session.commit()
+                print("Tạo phiếu khám thành công")
+                mapk = phieukham.mapk
+                toathuocs = ToaThuoc(ma_pk=mapk)
+                phieukham.toathuocs.append(toathuocs)
+                db.session.commit()
+                matoa = toathuocs.matoa
+                print("Tạo toa thuốc thành công")
+                return redirect(
+                    url_for('bacsi.bacsi_them_thuocpk', matoa=matoa))
+            except:
+                print("Kê toa thất bại")
+        elif request.form['thanhtoan'] == "Khám xong":
+            try:
+                benhnhan.phieukhams.append(phieukham)
+                db.session.add(phieukham)
+                db.session.commit()
+                print("Tạo phiếu khám thành công")
+                return redirect(url_for('bacsi.bacsi_danhsachkham'))
+            except:
+                print("Chuyển hướng thất bại")
+        else:
+            print("Thêm thất bại")
+
+    return render_template('bacsi_lapphieukham.html',
+                           ngaykham=ngaykham,
+                           mabn=mabn,
+                           tenbenhnhan=tenbenhnhan)
+
+
+@bacsi.route('/lichsukham')
+def bacsi_lichsukham():
+    return render_template('lichsubenhnhan.html')
 
 
 #--------------------ADMIN---------------------
+
+
+#-------------Tạo APP với những route trên----------
 def create_app():
     app.register_blueprint(yta, url_prefix='/yta')
     app.register_blueprint(admin, url_prefix='/admin')

@@ -5,78 +5,154 @@ import os
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, chitiettoathuoc, HoaDon
+from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, ChiTietToa, HoaDon, CachDung, DonVi
 from datetime import datetime, timedelta
+from website import db
 from sqlalchemy.sql import func
+from sqlalchemy import desc
 
 #Xử lí một số vấn đề về thời gian
 # Lấy thời gian ngày hôm nay [ngày và giờ hiện tại]
-today_str = datetime.today()
-# Chuyển thời gian lấy được qua String
-date_str = today_str.strftime("%Y-%m-%d")
-# Chuyển thời gian từ String qua DateTime [ngày hiện tại, giờ 00:00:00]
-today = today_str.strptime(date_str, "%Y-%m-%d")
+today = datetime.today().date()
 yesterday = today - timedelta(days=1)
 tomorrow = today + timedelta(days=1)
 
 
 # Xử lí các chức năng CRUD
 # --------------------TÀI KHOẢN---------------------
+# Lấy tất cả tài khoản
 def get_taikhoan_all():
     return TaiKhoan.query.all()
 
 
+# Lấy tài khoản theo lúc đăng nhập
 def get_login(username, password):
     return TaiKhoan.query.filter(TaiKhoan.tendangnhap == username,
                                  TaiKhoan.matkhau == password).first()
 
 
+# Lấy tài khoản theo tên tài khoản
 def get_taikhoan_by_usernames(usernames):
     return TaiKhoan.query.filter(TaiKhoan.tendangnhap == usernames).first()
 
 
 # --------------------BỆNH NHÂN---------------------
+# Lấy toàn bộ danh sách bệnh nhân (phân trang)
+def get_benhnhan_all(current_page=None, per_page=None):
+    return BenhNhan.query.paginate(page=current_page, per_page=per_page)
+
+
+# Lấy bệnh nhân theo cmnd :
+def get_benhnhan_by_cmnd(cmnd):
+    return BenhNhan.query.filter(BenhNhan.cmnd == cmnd).first()
+
+
+# Lấy bệnh nhân theo mã bệnh nhân :
+def get_benhnhan_by_mabn(mabn):
+    return BenhNhan.query.filter(BenhNhan.mabn == mabn).first()
 
 
 # --------------------PHIẾU KHÁM--------------------
+# Lấy phiếu khám theo mã phiếu khám
 def get_pk_by_mapk(mapk):
     return PhieuKham.query.filter(PhieuKham.mapk == mapk).first()
 
 
+# Lấy phiếu khám + bệnh nhân + toa thuốc chưa lập hoá đơn
+def get_pk_no_hd(current_page=None, per_page=None):
+    return db.session.query(
+        PhieuKham.mapk, ToaThuoc.matoa, BenhNhan.mabn, BenhNhan.hoten,
+        PhieuKham.ngaykham, PhieuKham.trieuchung, PhieuKham.loaibenh,
+        PhieuKham.tienkham,
+        ToaThuoc.tienthuoc).select_from(PhieuKham).join(ToaThuoc).join(
+            BenhNhan).filter(PhieuKham.hoadons == None).paginate(
+                page=current_page, per_page=per_page)
+
+
 # --------------------TOA THUỐC---------------------
+# Lấy toa thuốc theo mã toa thuốc
 def get_toathuoc_by_matoa(matoa):
     return ToaThuoc.query.filter(ToaThuoc.matoa == matoa).first()
 
 
+# Lấy toa thuốc theo mã phiếu khám
+def get_toathuoc_by_mapk(mapk):
+    return ToaThuoc.query.filter(ToaThuoc.ma_pk == mapk).first()
+
+
 # ----------------CHI TIẾT TOA THUỐC----------------
+def get_chitiettoa_by_matoa(ma_toa):
+    return db.session.query(
+        Thuoc.tenthuoc, ChiTietToa.soluong, CachDung.tencachdung,
+        ChiTietToa.tienthuoc, ToaThuoc.matoa,
+        Thuoc.mathuoc).select_from(ChiTietToa).join(ToaThuoc).join(Thuoc).join(
+            CachDung).filter(ToaThuoc.matoa == ma_toa).all()
+
+
+def get_chitiet_by_matoa_mathuoc(matoa, mathuoc):
+    return ChiTietToa.query.filter(ChiTietToa.matoa == matoa).filter(
+        ChiTietToa.mathuoc == mathuoc).first()
+
 
 # ---------------------THUỐC------------------------
+def get_thuoc_all():
+    return Thuoc.query.all()
+
+
+def get_thuoc_by_mathuoc(mathuoc):
+    return Thuoc.query.filter(Thuoc.mathuoc == mathuoc).first()
 
 
 # ---------------------HOÁ ĐƠN----------------------
-# Lấy hoá đơn chưa thanh toán hiện lên
-def get_hoadon():
-    return HoaDon.query.filter(HoaDon.dathanhtoan == 0).all()
+# Lấy hoá đơn theo mã hoá đơn
+def get_hoadon_by_mahd(mahd):
+    return HoaDon.query.filter(HoaDon.mahd == mahd).first()
+
+
+# Lấy hoá đơn + phiếu khám + toa thuốc hiện lên
+def get_hoadon(current_page=None, per_page=None):
+    return db.session.query(
+        HoaDon.mahd, HoaDon.ngayban, PhieuKham.tienkham, ToaThuoc.tienthuoc,
+        HoaDon.tongthu, HoaDon.dathanhtoan).select_from(
+            HoaDon).join(PhieuKham).join(ToaThuoc).order_by(
+                desc(HoaDon.ngayban)).paginate(page=current_page,
+                                               per_page=per_page)
 
 
 # Lấy báo cáo doanh thu
-def get_baocao():
-    return HoaDon.query.with_entities(
+def get_baocao(current_page=None,
+               per_page=None,
+               firstDate=None,
+               lastDate=None):
+    return db.session.query(
         HoaDon.ngayban,
-        func.sum(HoaDon.ma_pk).label("tong_bn"),
-        func.sum(HoaDon.tongthu).label("doanh_thu")).order_by(
-            HoaDon.ngayban).all()
+        func.count(HoaDon.ma_pk).label("tong_bn"),
+        func.sum(
+            HoaDon.tongthu).label("doanh_thu")).select_from(HoaDon).filter(
+                HoaDon.ngayban.between(firstDate, lastDate)).group_by(
+                    HoaDon.ngayban).paginate(page=current_page,
+                                             per_page=per_page)
 
 
 # -----------------DANH SÁCH KHÁM-------------------
-def get_ds_all():
-    return DanhSachKham.query.all()
+#Lấy bệnh nhân trong ds khám theo cmnd
+def get_ds_by_cmnd(cmnd):
+    return DanhSachKham.query.filter(DanhSachKham.cmnd == cmnd).first()
 
 
-def get_ds_today():
+# Lấy toàn bộ danh sách khám có phân trang
+def get_ds_all(current_page=None, per_page=None):
+    return DanhSachKham.query.paginate(page=current_page, per_page=per_page)
+
+
+# Lấy danh sách khám theo ngày hôm nay
+def get_ds_today(current_page=None, per_page=None):
     return DanhSachKham.query.filter(
-        DanhSachKham.ngaykham.between(today, tomorrow)).all()
+        DanhSachKham.ngaykham.between(today, tomorrow)).filter(
+            DanhSachKham.trangthai == 0).paginate(page=current_page,
+                                                  per_page=per_page)
 
 
 if __name__ == '__main__':
-    print(get_login(1, 2))
+    exist = get_baocao(1, 1)
+    print(type(exist))
