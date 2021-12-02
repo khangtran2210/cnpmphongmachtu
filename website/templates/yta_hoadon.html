@@ -1,5 +1,25 @@
-{% extends "common/admin/base.html" %}
-{% block title %} Y Tá | Hoá Đơn {% endblock %}
+{% extends "common/yta/base.html" %}
+{% block title %} Y Tá | Hoá đơn {% endblock %}
+{% block header %}
+<div class="header bg-primary pb-6">
+    <div class="container-fluid">
+        <div class="header-body">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-6 col-7">
+                    <h6 class="h2 text-white d-inline-block mb-0">Table</h6>
+                    <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+                        <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+                            <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+                            <li class="breadcrumb-item"><a href="#">Hoá đơn</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Default</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 {% block contents %}
 <div class="container-fluid mt--6">
     <div class="col">
@@ -118,7 +138,8 @@
                                 {% if p.dathanhtoan == True %}
                                 <td class="budget">Đã Thanh Toán</td>
                                 <td class="text-right">
-                                    <a class="btn btn-info btn-sm" href="#">Chi Tiết</a>
+                                    <a class="btn btn-info btn-sm"
+                                        href="{{url_for('yta.yta_chitiethoadon',mahd = p.mahd)}}">Chi Tiết</a>
                                 </td>
                                 {% else %}
                                 <td class="budget">Chưa Thanh Toán</td>
@@ -133,7 +154,7 @@
                     </table>
                 </div>
                 <!-- Card footer -->
-                {% if dshoadon !=0 %}
+                {% if dshoadon != none %}
                 <div class="card-footer py-4">
                     <nav aria-label="static.">
                         <ul class="pagination justify-content-end mb-0">

@@ -1,5 +1,25 @@
-{% extends "common/admin/base.html" %}
-{% block title %} Y Tá | Danh Sách Khám {% endblock %}
+{% extends "common/yta/base.html" %}
+{% block title %} Y Tá | Danh sách khám {% endblock %}
+{% block header %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Table</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="#">Danh sách khám</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Default</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
 {% block contents %}
 <div class="container-fluid mt--6">
   <div class="row">
@@ -15,14 +35,12 @@
             <thead class="thead-light">
               <tr>
                 <th scope="col" class="sort" data-sort="mads">Mã Danh Sách</th>
-                <th scope="col" class="sort" data-sort="ngaykham">Ngày</th>
                 <th scope="col" class="sort" data-sort="hoten">Họ Tên</th>
                 <th scope="col" class="sort" data-sort="gioitinh">Giới Tính</th>
                 <th scope="col" class="sort" data-sort="namsinh">Năm Sinh</th>
                 <th scope="col" class="sort" data-sort="diachi">Địa Chỉ</th>
                 <th scope="col" class="sort" data-sort="cmnd">CMND</th>
                 <th scope="col" class="sort" data-sort="sdt">SĐT</th>
-                <th scope="col" class="sort" data-sort="completion">Trạng Thái</th>
                 <th scope="col">Hành Động</th>
               </tr>
             </thead>
@@ -30,7 +48,6 @@
               {% for p in danhsach.items %}
               <tr>
                 <td class="budget">{{p.mads}}</td>
-                <td class="budget">{{p.ngaykham}}</td>
                 <td class="budget">{{p.hoten}}</td>
                 {% if p.gioitinh == 1 %}
                 <td class="budget">Nam</td>
@@ -41,11 +58,6 @@
                 <td class="budget">{{p.diachi}}</td>
                 <td class="budget">{{p.cmnd}}</td>
                 <td class="budget">{{p.sdt}}</td>
-                {% if p.trangthai == 0 %}
-                <td class="budget">Chưa khám</td>
-                {% else %}
-                <td class="budget">Đã Khám</td>
-                {% endif %}
                 <td class="text-right">
                   <div class="dropdown">
                     <a class="btn btn-sm btn-icon-only text-light" href="#" role="button" data-toggle="dropdown"
@@ -57,7 +69,6 @@
                       ">
                       <a class="dropdown-item" href="{{url_for('yta.yta_xoadanhsachkham', mads = p.mads)}}"
                         onclick="return confirm('Xoá người khám này ?')">Xoá</a>
-                      <a class="dropdown-item" href="#">Khám</a>
                     </div>
                   </div>
                 </td>

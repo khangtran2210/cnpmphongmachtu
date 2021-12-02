@@ -1,4 +1,6 @@
-{% extends "common/bacsi/base.html" %} {% block contents %}
+{% extends "common/bacsi/base.html" %}
+{% block title %} Bác Sĩ | Danh sách bệnh nhân {% endblock %}
+{% block header %}
 <div class="header bg-primary pb-6">
   <div class="container-fluid">
     <div class="header-body">
@@ -8,7 +10,7 @@
           <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
             <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
               <li class="breadcrumb-item"><a href="#"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item"><a href="#">Danh sách</a></li>
+              <li class="breadcrumb-item"><a href="#">Danh sách bệnh nhân</a></li>
               <li class="breadcrumb-item active" aria-current="page">Default</li>
             </ol>
           </nav>
@@ -17,6 +19,9 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block contents %}
 <div class="container-fluid mt--6">
   <div class="row">
     <div class="col">
@@ -30,7 +35,6 @@
           <table class="table align-items-center table-flush">
             <thead class="thead-light">
               <tr>
-                <th scope="col" class="sort" data-sort="mads">Mã Bệnh Nhân</th>
                 <th scope="col" class="sort" data-sort="hoten">Họ Tên</th>
                 <th scope="col" class="sort" data-sort="gioitinh">Giới Tính</th>
                 <th scope="col" class="sort" data-sort="namsinh">Năm Sinh</th>
@@ -43,7 +47,6 @@
             <tbody class="list">
               {% for p in danhsach.items %}
               <tr>
-                <td class="budget">{{p.mabn}}</td>
                 <td class="budget">{{p.hoten}}</td>
                 {% if p.gioitinh == 1 %}
                 <td class="budget">Nam</td>
@@ -65,7 +68,7 @@
                       ">
                       <a class="dropdown-item" href="{{url_for('bacsi.bacsi_xoabenhnhan', mabn = p.mabn)}}"
                         onclick="return confirm('Xoá bệnh nhân này ?')">Xoá</a>
-                      <a class="dropdown-item" href="#{{url_for('bacsi.bacsi_lichsukham', mabn = p.mabn)}}">Lịch sử
+                      <a class="dropdown-item" href="{{url_for('bacsi.bacsi_lichsukham', mabn = p.mabn)}}">Lịch sử
                         khám</a>
                     </div>
                   </div>
@@ -76,12 +79,12 @@
           </table>
         </div>
         <!-- Card footer -->
-        {% if danhsach != 0 %}
+        {% if danhsach != none %}
         <div class="card-footer py-4">
           <nav aria-label="static.">
             <ul class="pagination justify-content-end mb-0">
               <li class="page-item {% if not danhsach.has_prev %} disabled {% endif %}">
-                <a class="page-link" href="{{url_for('bacsi.bacsi_danhsachkham', page = danhsach.prev_num)}}">
+                <a class="page-link" href="{{url_for('bacsi.bacsi_danhsachbenhnhan', page = danhsach.prev_num)}}">
                   <i class="fas fa-angle-left"></i>
                   <span class="sr-only">Previous</span>
                 </a>
@@ -90,12 +93,12 @@
               {% if page_number %}
               <li class="page-item {% if page_number==danhsach.page %} active {% endif %}">
                 <a class="page-link"
-                  href="{{url_for('bacsi.bacsi_danhsachkham', page = page_number)}}">{{page_number}}</a>
+                  href="{{url_for('bacsi.bacsi_danhsachbenhnhan', page = page_number)}}">{{page_number}}</a>
               </li>
               {% endif %}
               {% endfor %}
               <li class="page-item {% if not danhsach.has_next %} disabled {% endif %}">
-                <a class="page-link" href="{{url_for('bacsi.bacsi_danhsachkham', page = danhsach.next_num)}}">
+                <a class="page-link" href="{{url_for('bacsi.bacsi_danhsachbenhnhan', page = danhsach.next_num)}}">
                   <i class="fas fa-angle-right"></i>
                   <span class="sr-only">Next</span>
                 </a>

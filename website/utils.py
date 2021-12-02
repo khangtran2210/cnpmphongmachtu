@@ -42,20 +42,26 @@ def get_benhnhan_all(current_page=None, per_page=None):
     return BenhNhan.query.paginate(page=current_page, per_page=per_page)
 
 
-# Lấy bệnh nhân theo cmnd :
+# Lấy 1 bệnh nhân theo cmnd :
 def get_benhnhan_by_cmnd(cmnd):
     return BenhNhan.query.filter(BenhNhan.cmnd == cmnd).first()
 
 
-# Lấy bệnh nhân theo mã bệnh nhân :
+# Lấy 1 bệnh nhân theo mã bệnh nhân :
 def get_benhnhan_by_mabn(mabn):
     return BenhNhan.query.filter(BenhNhan.mabn == mabn).first()
 
 
 # --------------------PHIẾU KHÁM--------------------
-# Lấy phiếu khám theo mã phiếu khám
+# Lấy 1 phiếu khám theo mã phiếu khám
 def get_pk_by_mapk(mapk):
     return PhieuKham.query.filter(PhieuKham.mapk == mapk).first()
+
+
+# Lấy toàn bộ phiếu khám theo mã bệnh nhân (có phân trang)
+def get_pk_all_by_mabn(mabn, current_page=None, per_page=None):
+    return PhieuKham.query.filter(PhieuKham.ma_bn == mabn).paginate(
+        page=current_page, per_page=per_page)
 
 
 # Lấy phiếu khám + bệnh nhân + toa thuốc chưa lập hoá đơn
@@ -81,6 +87,7 @@ def get_toathuoc_by_mapk(mapk):
 
 
 # ----------------CHI TIẾT TOA THUỐC----------------
+# Lấy tất cả chi tiết thuốc theo mã toa
 def get_chitiettoa_by_matoa(ma_toa):
     return db.session.query(
         Thuoc.tenthuoc, ChiTietToa.soluong, CachDung.tencachdung,
@@ -89,9 +96,19 @@ def get_chitiettoa_by_matoa(ma_toa):
             CachDung).filter(ToaThuoc.matoa == ma_toa).all()
 
 
+# Lấy chi tiết thuốc theo mã toa và mã thuốc
 def get_chitiet_by_matoa_mathuoc(matoa, mathuoc):
     return ChiTietToa.query.filter(ChiTietToa.matoa == matoa).filter(
         ChiTietToa.mathuoc == mathuoc).first()
+
+
+# Lấy tất cả chi tiết thuốc theo mã hoá đơn
+def get_chitiet_by_mahd(mahd):
+    return db.session.query(
+        Thuoc.tenthuoc, ChiTietToa.soluong, DonVi.tendonvi,
+        ChiTietToa.tienthuoc).select_from(HoaDon).join(ToaThuoc).join(
+            ChiTietToa).join(Thuoc).join(DonVi).filter(
+                HoaDon.mahd == mahd).all()
 
 
 # ---------------------THUỐC------------------------
@@ -109,7 +126,7 @@ def get_hoadon_by_mahd(mahd):
     return HoaDon.query.filter(HoaDon.mahd == mahd).first()
 
 
-# Lấy hoá đơn + phiếu khám + toa thuốc hiện lên
+# Lấy toàn bộ hoá đơn có (tiền thuốc + tiền khám) (có phân trang)
 def get_hoadon(current_page=None, per_page=None):
     return db.session.query(
         HoaDon.mahd, HoaDon.ngayban, PhieuKham.tienkham, ToaThuoc.tienthuoc,
@@ -117,6 +134,16 @@ def get_hoadon(current_page=None, per_page=None):
             HoaDon).join(PhieuKham).join(ToaThuoc).order_by(
                 desc(HoaDon.ngayban)).paginate(page=current_page,
                                                per_page=per_page)
+
+
+# Lấy chi tiết hoá đơn, bao gồm thông tin bệnh nhân, chi tiết thuốc theo mã hoá đơn
+def get_cthoadon_by_mahd(mahd):
+    return db.session.query(
+        HoaDon.mahd, BenhNhan.hoten, HoaDon.ngayban, PhieuKham.tienkham,
+        ToaThuoc.tienthuoc,
+        HoaDon.tongthu).select_from(ToaThuoc).join(HoaDon).join(
+            PhieuKham).join(BenhNhan).filter(HoaDon.mahd == mahd).filter(
+                HoaDon.dathanhtoan == True).first()
 
 
 # Lấy báo cáo doanh thu
@@ -154,5 +181,5 @@ def get_ds_today(current_page=None, per_page=None):
 
 
 if __name__ == '__main__':
-    exist = get_baocao(1, 1)
-    print(type(exist))
+    exist = get_hoadon_by_mahd(4)
+    print(exist)
