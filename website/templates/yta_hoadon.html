@@ -24,7 +24,7 @@
 <div class="container-fluid mt--6">
     <div class="col">
         <div class="col-xl-2 order-xl-2"></div>
-        <div class="col-10">
+        <div class="col-12">
             <div class="card">
                 <!-- Card header -->
                 <div class="card-header border-0">
@@ -103,7 +103,7 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-10">
+        <div class="col-12">
             <div class="card">
                 <!-- Card header -->
                 <div class="card-header border-0">
@@ -124,7 +124,7 @@
                                 </th>
                                 <th scope="col" class="sort" data-sort="namsinh">Tổng Thu</th>
                                 <th scope="col" class="sort" data-sort="namsinh">Trạng Thái</th>
-                                <th scope="col" class="sort" data-sort="namsinh">Hành Động</th>
+                                <th class="text-center" scope="col" class="sort" data-sort="namsinh">Hành Động</th>
                             </tr>
                         </thead>
                         <tbody class="list">
@@ -137,15 +137,37 @@
                                 <td class="budget">{{p.tongthu}}</td>
                                 {% if p.dathanhtoan == True %}
                                 <td class="budget">Đã Thanh Toán</td>
-                                <td class="text-right">
+                                <td class="text-center">
                                     <a class="btn btn-info btn-sm"
                                         href="{{url_for('yta.yta_chitiethoadon',mahd = p.mahd)}}">Chi Tiết</a>
                                 </td>
                                 {% else %}
                                 <td class="budget">Chưa Thanh Toán</td>
-                                <td class="text-right">
+                                <td class=" text-center">
                                     <a class="btn btn-success btn-sm"
-                                        href="{{url_for('yta.yta_thanhtoanhoadon',mahd = p.mahd)}}">Thanh Toán</a>
+                                        href="{{url_for('yta.yta_thanhtoanhoadon',mahd = p.mahd)}}">Thanh Toán Trực Tuyến</a>
+                                    <h6></h6>
+                                    <div id="paypal-button-container"></div>
+                                    <!-- Include the PayPal JavaScript SDK -->
+                                    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+                                    <script>
+                                        paypal.Buttons({
+                                            createOrder: function(data, actions) {
+                                                return actions.order.create({
+                                                    purchase_units: [{
+                                                        amount: {
+                                                            value: '{{p.tongthu/20000}}'
+                                                        }
+                                                    }]
+                                                });
+                                            },
+                                            onApprove: function(data, actions) {
+                                                return actions.order.capture().then(function(orderData) {                                               
+                                                    window.location.replace(URL="http://127.0.0.1:5000/yta/thanhtoanhoadon?mahd={{p.mahd}}");                                                  
+                                                });
+                                            }
+                                        }).render('#paypal-button-container');
+                                    </script>
                                 </td>
                                 {% endif %}
                             </tr>
