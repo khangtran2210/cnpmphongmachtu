@@ -32,7 +32,7 @@
         navbar-light
       ">
     <div class="container">
-      <a class="navbar-brand" href="static/home.html">
+      <a class="navbar-brand" href="{{ url_for('user.user_login') }}">
         <img src="static/assets/img/logo.png" />
       </a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse"
@@ -58,7 +58,7 @@
         </div>
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a href="login" class="nav-link">
+            <a href="{{ url_for('user.user_login') }}" class="nav-link">
               <span class="nav-link-inner--text">Đăng Nhập</span>
             </a>
           </li>

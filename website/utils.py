@@ -2,6 +2,8 @@
 import sys
 import os
 
+from flask_login.utils import login_user
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
@@ -181,5 +183,5 @@ def get_ds_today(current_page=None, per_page=None):
 
 
 if __name__ == '__main__':
-    exist = get_hoadon_by_mahd(4)
-    print(exist)
+    exist = get_login("admin", 123)
+    print(exist.ma_quyen)

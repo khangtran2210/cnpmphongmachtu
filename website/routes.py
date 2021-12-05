@@ -5,15 +5,18 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from website import app, db, utils
+from website import app, db, utils, login
 from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, ChiTietToa, HoaDon
 import calendar
 import datetime
+from website import utils
+from website.admin import *
+from flask_login import login_user
 # Tạo tên các prefix
 yta = Blueprint('yta', __name__)
 user = Blueprint('user', __name__)
 bacsi = Blueprint('bacsi', __name__)
-admin = Blueprint('admin', __name__)
+
 
 # Xử lí các trang
 #--------------------NGƯỜI DÙNG---------------------
@@ -116,9 +119,14 @@ def user_login():
             #Tạo session
             session["maquyen"] = dangnhap.ma_quyen
             session["logged_in"] = True
-            #Phân quyền với 0 - Admin, 1 - Bác sĩ, 2 - Y tá, 3 - Người dùng
+            #Phân quyền với 1 - Admin, 2 - Bác sĩ, 3 - Y tá, 4 - Người dùng
             if (session["maquyen"] == 1):
-                return redirect(url_for("admin.home"))
+                '''Nếu bị lỗi không tìm thấy id
+                   Vào models bấm ctrl + chuột trái vào UserMixin
+                   Tìm hàm def get_id(self):
+                   Sửa dòng return text_type(self.id) thành return text_type(self.madangnhap)'''
+                login_user(dangnhap)
+                return redirect("/admin")
             if (session["maquyen"] == 2):
                 return redirect(url_for("bacsi.bacsi_danhsachkham"))
             if (session["maquyen"] == 3):
@@ -612,12 +620,13 @@ def bacsi_baocao():
 
 
 #--------------------ADMIN---------------------
-
+@login.user_loader
+def user_load(user_id):
+    return TaiKhoan.query.get(user_id)
 
 #-------------Tạo APP với những route trên----------
 def create_app():
     app.register_blueprint(yta, url_prefix='/yta')
-    app.register_blueprint(admin, url_prefix='/admin')
     app.register_blueprint(bacsi, url_prefix='/bacsi')
     app.register_blueprint(user, url_prefix='/')
     return app

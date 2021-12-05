@@ -134,6 +134,15 @@ class ChiTietToa(db.Model):
 
 if __name__ == "__main__":
     # Xoá database
-    #db.drop_all()
+    # db.drop_all()
     # Tạo database
     db.create_all()
+    # q1 = Quyen(maquyen=1, tenquyen="Admin")
+    # q2 = Quyen(maquyen=2, tenquyen="Bác sĩ")
+    # q3 = Quyen(maquyen=3, tenquyen="Y tá")
+    # q4 = Quyen(maquyen=4, tenquyen="Khách hàng")
+    # db.session.add(q1)
+    # db.session.add(q2)
+    # db.session.add(q3)
+    # db.session.add(q4)
+    # db.session.commit()

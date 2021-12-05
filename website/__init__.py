@@ -1,6 +1,9 @@
 # Import các thư viện vào
 from flask import Flask
+from flask_login.config import LOGIN_MESSAGE
 from flask_sqlalchemy import SQLAlchemy
+from flask_admin import Admin
+from flask_login import LoginManager, login_manager
 
 app = Flask(__name__)
 
@@ -12,3 +15,5 @@ app.config[
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
 db = SQLAlchemy(app=app)
+admin = Admin(app=app, name="QUẢN LÝ PHÒNG MẠCH", template_mode="bootstrap4")
+login = LoginManager(app=app)
