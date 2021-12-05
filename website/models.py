@@ -15,7 +15,7 @@ from flask_login import UserMixin
 
 class QuyDinh(db.Model):
     __tablename__ = "QuyDinh"
-    maquydinh = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    maquydinh = db.Column(db.Integer, primary_key=True)
     tenquydinh = db.Column(db.String(300), nullable=False)
     quydinh = db.Column(db.Float, nullable=False)
 
@@ -96,14 +96,19 @@ class CachDung(db.Model):
     __tablename__ = "CachDung"
     macachdung = db.Column(db.Integer, autoincrement=True, primary_key=True)
     tencachdung = db.Column(db.String(300), nullable=False)
-    thuocs = relationship("Thuoc", backref="o_cachdung", lazy=True)
+    thuocs = relationship("Thuoc", backref="o_tencachdung", lazy=True)
 
+    def __str__(seft):
+        return seft.tencachdung
 
 class DonVi(db.Model):
     __tablename__ = "DonVi"
     madonvi = db.Column(db.Integer, autoincrement=True, primary_key=True)
     tendonvi = db.Column(db.String(300), nullable=False)
-    thuocs = relationship("Thuoc", backref="o_donvi", lazy=True)
+    thuocs = relationship("Thuoc", backref="o_tendonvi", lazy=True)
+
+    def __str__(seft):
+        return seft.tendonvi
 
 
 class Thuoc(db.Model):
@@ -134,15 +139,40 @@ class ChiTietToa(db.Model):
 
 if __name__ == "__main__":
     # Xoá database
-    # db.drop_all()
+    db.drop_all()
     # Tạo database
     db.create_all()
-    # q1 = Quyen(maquyen=1, tenquyen="Admin")
-    # q2 = Quyen(maquyen=2, tenquyen="Bác sĩ")
-    # q3 = Quyen(maquyen=3, tenquyen="Y tá")
-    # q4 = Quyen(maquyen=4, tenquyen="Khách hàng")
-    # db.session.add(q1)
-    # db.session.add(q2)
-    # db.session.add(q3)
-    # db.session.add(q4)
-    # db.session.commit()
+    q1 = Quyen(maquyen=1, tenquyen="Admin")
+    q2 = Quyen(maquyen=2, tenquyen="Bác sĩ")
+    q3 = Quyen(maquyen=3, tenquyen="Y tá")
+    q4 = Quyen(maquyen=4, tenquyen="Khách hàng")
+    db.session.add(q1)
+    db.session.add(q2)
+    db.session.add(q3)
+    db.session.add(q4)
+    tk1 = TaiKhoan(tendangnhap="admin", matkhau="123", ma_quyen=1)
+    tk2 = TaiKhoan(tendangnhap="bacsi", matkhau="123", ma_quyen=2)
+    tk3 = TaiKhoan(tendangnhap="yta", matkhau="123", ma_quyen=3)
+    tk4 = TaiKhoan(tendangnhap="user", matkhau="123", ma_quyen=4)
+    db.session.add(tk1)
+    db.session.add(tk2)
+    db.session.add(tk3)
+    db.session.add(tk4)
+    qd1 = QuyDinh(maquydinh=1, tenquydinh="Số khách hàng tối đa", quydinh=40)
+    qd2 = QuyDinh(maquydinh=2, tenquydinh="Tiền khám", quydinh=80000)
+    db.session.add(qd1)
+    db.session.add(qd2)
+    dv1 = DonVi(tendonvi="Viên nén")
+    dv2 = DonVi(tendonvi="Hủ")
+    dv3 = DonVi(tendonvi="Vỉ")
+    db.session.add(dv1)
+    db.session.add(dv2)
+    db.session.add(dv3)
+    cd1= CachDung(tencachdung="Uống")
+    cd2= CachDung(tencachdung="Ngậm")
+    db.session.add(cd1)
+    db.session.add(cd2)
+    db.session.commit()
+
+
+

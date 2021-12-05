@@ -3,7 +3,7 @@ from flask import Flask
 from flask_login.config import LOGIN_MESSAGE
 from flask_sqlalchemy import SQLAlchemy
 from flask_admin import Admin
-from flask_login import LoginManager, login_manager
+from flask_login import LoginManager
 
 app = Flask(__name__)
 
