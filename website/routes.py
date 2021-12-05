@@ -85,7 +85,7 @@ def user_home():
         cmnd = request.form.get("cmnd")
         diachi = request.form.get("diachi")
         sdt = request.form.get("sdt")
-        trangthai = 0
+        trangthai = False
         nguoikham = DanhSachKham(ngaykham=ngaykham,
                                  hoten=hoten,
                                  gioitinh=gioitinh,
@@ -100,6 +100,7 @@ def user_home():
         if (dem[0] <= int(gioiHanKham.quydinh)):
             try:
                 db.session.add(nguoikham)
+
                 db.session.commit()
                 flash("Bạn đã đặt lịch khám thành công", "success")
             except:
@@ -260,7 +261,7 @@ def yta_themdskham():
         cmnd = request.form.get("cmnd")
         diachi = request.form.get("diachi")
         sdt = request.form.get("sdt")
-        trangthai = 0
+        trangthai = False
         nguoikham = DanhSachKham(ngaykham=ngaykham,
                                  hoten=hoten,
                                  gioitinh=gioitinh,
@@ -465,11 +466,16 @@ def bacsi_them_thuocpk():
             exist = utils.get_chitiet_by_matoa_mathuoc(matoa, mathuoc)
             try:
                 if exist is None:
+                    if (thuoc_obj.soluong < int(soluong)):
+                        soluong = thuoc_obj.soluong
+                        thuoc_obj.soluong = 0
+                        thuoc_obj.trangthai = 0
+                    else:
+                        thuoc_obj.soluong -= int(soluong)
                     toathuoc.chitiettoas.append(
                         ChiTietToa(soluong=soluong,
                                    tienthuoc=thuoc_obj.dongia,
                                    thuocs=thuoc_obj))
-                    thuoc_obj.soluong -= int(soluong)
                     # Cập nhật giá cho toa thuốc (vì mới thêm thuốc vào)
                     db.session.commit()
                     print("Thêm chi tiết thuốc thành công")
@@ -518,6 +524,8 @@ def bacsi_xoachitietthuoc():
     if (delete_obj != None):
         soluong = delete_obj.soluong
         thuoc_obj.soluong += soluong
+        if (thuoc_obj.trangthai == 0):
+            thuoc_obj.trangthai = 1
         db.session.delete(delete_obj)
         db.session.commit()
         # Cập nhật lại tiền trong toa thuốc

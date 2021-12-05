@@ -123,7 +123,8 @@ def get_thuoc_by_mathuoc(mathuoc):
 
 
 def get_thuoc_all_dv():
-    return db.session.query(Thuoc, DonVi).join(DonVi).all()
+    return db.session.query(
+        Thuoc, DonVi).join(DonVi).filter(Thuoc.trangthai == 1).all()
 
 
 # ---------------------HOÁ ĐƠN----------------------
@@ -182,8 +183,8 @@ def get_ds_all(current_page=None, per_page=None):
 def get_ds_today(current_page=None, per_page=None):
     return DanhSachKham.query.filter(
         DanhSachKham.ngaykham.between(today, tomorrow)).filter(
-            DanhSachKham.trangthai == 0).paginate(page=current_page,
-                                                  per_page=per_page)
+            DanhSachKham.trangthai == False).paginate(page=current_page,
+                                                      per_page=per_page)
 
 
 # Đếm danh sách kham theo ngày hôm nay
@@ -200,5 +201,5 @@ def get_max_dskham():
 
 
 if __name__ == '__main__':
-    tienkham = QuyDinh.query.filter(QuyDinh.maquydinh == 2).first().quydinh
-    print(tienkham)
+    tienkham = get_ds_by_cmnd(1234)
+    print(tienkham.trangthai)
