@@ -7,7 +7,7 @@ from flask_login.utils import login_user
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
-from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, ChiTietToa, HoaDon, CachDung, DonVi
+from website.models import BenhNhan, DanhSachKham, TaiKhoan, PhieuKham, ToaThuoc, Thuoc, ChiTietToa, HoaDon, CachDung, DonVi, QuyDinh
 from datetime import datetime, timedelta
 from website import db
 from sqlalchemy.sql import func
@@ -122,6 +122,10 @@ def get_thuoc_by_mathuoc(mathuoc):
     return Thuoc.query.filter(Thuoc.mathuoc == mathuoc).first()
 
 
+def get_thuoc_all_dv():
+    return db.session.query(Thuoc, DonVi).join(DonVi).all()
+
+
 # ---------------------HOÁ ĐƠN----------------------
 # Lấy hoá đơn theo mã hoá đơn
 def get_hoadon_by_mahd(mahd):
@@ -182,6 +186,19 @@ def get_ds_today(current_page=None, per_page=None):
                                                   per_page=per_page)
 
 
+# Đếm danh sách kham theo ngày hôm nay
+def count_dskham_today():
+    obj = db.session.query(func.count(
+        DanhSachKham.mads).label("slkham")).select_from(DanhSachKham).filter(
+            DanhSachKham.ngaykham.between(today, tomorrow)).first()
+    return obj
+
+
+# -----------------QUY ĐỊNH-------------------
+def get_max_dskham():
+    return QuyDinh.query.filter(QuyDinh.maquydinh == 1).first()
+
+
 if __name__ == '__main__':
-    exist = get_login("admin", 123)
-    print(exist.ma_quyen)
+    tienkham = QuyDinh.query.filter(QuyDinh.maquydinh == 2).first().quydinh
+    print(tienkham)

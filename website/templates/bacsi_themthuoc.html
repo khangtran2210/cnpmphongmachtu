@@ -81,8 +81,8 @@
                                     <div class="form-group">
                                         <label class="form-control-label" for="tenthuoc">Thuốc</label>
                                         <select name="mathuoc" id="tenthuoc" class="form-control">
-                                            {% for p in dsthuoc %}
-                                            <option value="{{p.mathuoc}}">{{p.tenthuoc}}</option>
+                                            {% for p,q in dsthuoc %}
+                                            <option value="{{p.mathuoc}}">{{p.tenthuoc}} - {{q.tendonvi}}</option>
                                             {% endfor %}
                                         </select>
                                     </div>

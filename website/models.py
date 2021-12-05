@@ -101,6 +101,7 @@ class CachDung(db.Model):
     def __str__(seft):
         return seft.tencachdung
 
+
 class DonVi(db.Model):
     __tablename__ = "DonVi"
     madonvi = db.Column(db.Integer, autoincrement=True, primary_key=True)
@@ -117,10 +118,10 @@ class Thuoc(db.Model):
     tenthuoc = db.Column(db.String(300), unique=True, nullable=False)
     soluong = db.Column(db.Integer, default=0)
     dongia = db.Column(db.Float, default=0)
-    madonvi = db.Column(db.Integer, db.ForeignKey(DonVi.madonvi), unique=True)
+    madonvi = db.Column(db.Integer, db.ForeignKey(DonVi.madonvi), unique=False)
     macachdung = db.Column(db.Integer,
                            db.ForeignKey(CachDung.macachdung),
-                           unique=True)
+                           unique=False)
     trangthai = db.Column(db.Integer, default=1)
 
 
@@ -139,9 +140,9 @@ class ChiTietToa(db.Model):
 
 if __name__ == "__main__":
     # Xoá database
-    db.drop_all()
+    #db.drop_all()
     # Tạo database
-    db.create_all()
+    #db.create_all()
     q1 = Quyen(maquyen=1, tenquyen="Admin")
     q2 = Quyen(maquyen=2, tenquyen="Bác sĩ")
     q3 = Quyen(maquyen=3, tenquyen="Y tá")
@@ -168,11 +169,8 @@ if __name__ == "__main__":
     db.session.add(dv1)
     db.session.add(dv2)
     db.session.add(dv3)
-    cd1= CachDung(tencachdung="Uống")
-    cd2= CachDung(tencachdung="Ngậm")
+    cd1 = CachDung(tencachdung="Uống")
+    cd2 = CachDung(tencachdung="Ngậm")
     db.session.add(cd1)
     db.session.add(cd2)
     db.session.commit()
-
-
-

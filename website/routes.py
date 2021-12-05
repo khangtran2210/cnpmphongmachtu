@@ -17,7 +17,6 @@ yta = Blueprint('yta', __name__)
 user = Blueprint('user', __name__)
 bacsi = Blueprint('bacsi', __name__)
 
-
 # Xử lí các trang
 #--------------------NGƯỜI DÙNG---------------------
 
@@ -96,12 +95,18 @@ def user_home():
                                  sdt=sdt,
                                  trangthai=trangthai)
 
-        try:
-            db.session.add(nguoikham)
-            db.session.commit()
-            flash("Bạn đã đặt lịch khám thành công", "success")
-        except:
-            flash("Bạn đã đặt lịch khám thất bại", "error")
+        gioiHanKham = utils.get_max_dskham()
+        dem = utils.count_dskham_today()
+        if (dem[0] <= int(gioiHanKham.quydinh)):
+            try:
+                db.session.add(nguoikham)
+                db.session.commit()
+                flash("Bạn đã đặt lịch khám thành công", "success")
+            except:
+                flash("Bạn đã đặt lịch khám thất bại", "error")
+        else:
+            flash("Quy phạm quy định", "error")
+            print("Quy phạm quy định")
     return render_template('user_home.html')
 
 
@@ -264,14 +269,19 @@ def yta_themdskham():
                                  diachi=diachi,
                                  sdt=sdt,
                                  trangthai=trangthai)
+        gioiHanKham = utils.get_max_dskham()
+        dem = utils.count_dskham_today()
+        if (dem[0] <= int(gioiHanKham.quydinh)):
+            try:
 
-        try:
-            db.session.add(nguoikham)
-            db.session.commit()
-            print("Thêm thành công")
-            return redirect(url_for("yta.yta_themdskham"))
-        except:
-            print("Thêm thất bại")
+                db.session.add(nguoikham)
+                db.session.commit()
+                print("Thêm thành công")
+                return redirect(url_for("yta.yta_themdskham"))
+            except:
+                print("Thêm thất bại")
+        else:
+            print("Quy phạm quy định")
     return render_template('yta_themdskham.html')
 
 
@@ -441,7 +451,7 @@ def bacsi_them_thuocpk():
     matoa = request.args.get('matoa', 123, type=str)
     ngayke = utils.today
     chiTietToa = utils.get_chitiettoa_by_matoa(matoa)
-    thuocs = utils.get_thuoc_all()
+    thuocs = utils.get_thuoc_all_dv()
     if request.method == 'POST':
         matoa = request.form.get('matoa')
         mathuoc = request.form.get('mathuoc')
@@ -459,6 +469,7 @@ def bacsi_them_thuocpk():
                         ChiTietToa(soluong=soluong,
                                    tienthuoc=thuoc_obj.dongia,
                                    thuocs=thuoc_obj))
+                    thuoc_obj.soluong -= int(soluong)
                     # Cập nhật giá cho toa thuốc (vì mới thêm thuốc vào)
                     db.session.commit()
                     print("Thêm chi tiết thuốc thành công")
@@ -503,7 +514,10 @@ def bacsi_xoachitietthuoc():
     matoa = request.args.get('matoa')
     mathuoc = request.args.get('mathuoc')
     delete_obj = utils.get_chitiet_by_matoa_mathuoc(matoa, mathuoc)
+    thuoc_obj = utils.get_thuoc_by_mathuoc(mathuoc)
     if (delete_obj != None):
+        soluong = delete_obj.soluong
+        thuoc_obj.soluong += soluong
         db.session.delete(delete_obj)
         db.session.commit()
         # Cập nhật lại tiền trong toa thuốc
@@ -528,6 +542,7 @@ def bacsi_lapphieukham():
         tenbenhnhan = benhnhan.hoten
         mabn = benhnhan.mabn
     ngaykham = utils.today
+    tienkham_set = QuyDinh.query.filter(QuyDinh.maquydinh == 2).first().quydinh
     if request.method == 'POST':
         mabn = request.form.get('mabn')
         benhnhan = utils.get_benhnhan_by_mabn(mabn)
@@ -569,7 +584,8 @@ def bacsi_lapphieukham():
     return render_template('bacsi_lapphieukham.html',
                            ngaykham=ngaykham,
                            mabn=mabn,
-                           tenbenhnhan=tenbenhnhan)
+                           tenbenhnhan=tenbenhnhan,
+                           tienkham_set=tienkham_set)
 
 
 @bacsi.route('/lichsukham')
@@ -623,6 +639,7 @@ def bacsi_baocao():
 @login.user_loader
 def user_load(user_id):
     return TaiKhoan.query.get(user_id)
+
 
 #-------------Tạo APP với những route trên----------
 def create_app():
